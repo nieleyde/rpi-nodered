@@ -1,53 +1,52 @@
 # DOCKER-VERSION 1.0.0
-FROM yyolk/rpi-archlinuxarm
+FROM resin/rpi-raspbian
 
-# install required packages
-RUN pacman -Syu --noconfirm
-RUN pacman-db-upgrade
-RUN pacman -Sy unzip wget --noconfirm
+# install required packages, in one command
+RUN apt-get update && \
+    apt-get install -y  python-dev
 
-# install RPi.GPIO
-RUN pacman -Sy python2 python2-pip gcc make sudo --noconfirm
-ENV PYTHON /bin/python2
-RUN pip2 install RPi.GPIO
-RUN touch /usr/share/doc/python-rpi.gpio
+ENV PYTHON /usr/bin/python2
+
+# install nodejs 0.10.36 for rpi 
+#RUN apt-get install -y wget && \
+#    wget http://node-arm.herokuapp.com/node_0.10.36_armhf.deb && \
+#    dpkg -i node_0.10.36_armhf.deb && \
+#    rm node_0.10.36_armhf.deb && \
+#    apt-get autoremove -y wget
 
 
-# install nodejs
-RUN pacman -U http://rollback.archlinuxarm.org/2015/02/15/armv6h/community/nodejs-0.10.36-3-armv6h.pkg.tar.xz --noconfirm
+# install nodejs 0.11.10 for rpi2
+RUN apt-get install -y wget && \
+    wget http://nodejs.org/dist/v0.11.10/node-v0.11.10-linux-arm-pi.tar.gz && \
+    gunzip node-v0.11.10-linux-arm-pi.tar.gz && \
+    tar xvf node-v0.11.10-linux-arm-pi.tar && \
+    apt-get autoremove -y wget
 
-# install rpi tools 
-RUN pacman -Sy raspberrypi-firmware-tools --noconfirm
+env PATH /node-v0.11.10-linux-arm-pi/bin:$PATH
 
-# Hack for python to resolve to python2 
-# https://wiki.archlinux.org/index.php/python#Python_2
-WORKDIR /root/bin
-RUN ln -s /bin/python2.7 ~/bin/python
-RUN ln -s /bin/python2.7-config ~/bin/python-config
-env PATH ~/bin:$PATH
+# install RPI.GPIO python libs
+RUN apt-get install -y python-pip mercurial && \
+    pip install hg+http://hg.code.sf.net/p/raspberry-gpio-python/code#egg=RPi.GPIO && \
+    apt-get autoremove -y python-pip mercurial
 
-# install nodered - from source
-WORKDIR /src/
-RUN wget https://github.com/node-red/node-red/archive/0.10.6.zip
-RUN unzip 0.10.6.zip
-WORKDIR /src/node-red-0.10.6
-RUN npm install --production
-
-# install nodered - npm install  - DIDN'T WORK ON 2/27 - npm cb() error
-##WORKDIR /usr/lib/node_modules/node-red
-#ENV USER root
-#RUN npm install node-red
+# install node-red
+RUN apt-get install -y build-essential && \
+    npm install -g --unsafe-perm  node-red && \
+    npm install node-red-contrib-googlechart && \
+    npm install node-red-node-web-nodes && \
+    apt-get autoremove -y build-essential
 
 # install nodered nodes
-RUN npm i node-red-contrib-googlechart
-RUN npm i node-red-node-web-nodes
+RUN touch /usr/share/doc/python-rpi.gpio
+COPY ./source /usr/local/lib/node_modules/node-red/nodes/core/hardware
+RUN chmod 777 /usr/local/lib/node_modules/node-red/nodes/core/hardware/nrgpio
 
-# fix "nrpgio python command not running" error
-COPY ./source /src/node-red-0.10.6/nodes/core/hardware
-RUN chmod 777 /src/node-red-0.10.6/nodes/core/hardware/nrgpio
+WORKDIR /root/bin
+RUN ln -s /usr/bin/python2 ~/bin/python
+RUN ln -s /usr/bin/python2-config ~/bin/python-config
+env PATH ~/bin:$PATH
 
 # run application
 EXPOSE 1880
 #CMD ["/bin/bash"]
-ENTRYPOINT ["node","--max-old-space-size=128","red.js","-v"]
-
+ENTRYPOINT ["node-red-pi","-v","--max-old-space-size=128"]
