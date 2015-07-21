@@ -7,27 +7,19 @@ RUN apt-get update && \
 
 ENV PYTHON /usr/bin/python2
 
-# install nodejs 0.10.36 for rpi 
-#RUN apt-get install -y wget && \
-#    wget http://node-arm.herokuapp.com/node_0.10.36_armhf.deb && \
-#    dpkg -i node_0.10.36_armhf.deb && \
-#    rm node_0.10.36_armhf.deb && \
-#    apt-get autoremove -y wget
-
-
-# install nodejs 0.11.10 for rpi2
+# install nodejs for rpi
 RUN apt-get install -y wget && \
-    wget http://nodejs.org/dist/v0.11.10/node-v0.11.10-linux-arm-pi.tar.gz && \
-    gunzip node-v0.11.10-linux-arm-pi.tar.gz && \
-    tar xvf node-v0.11.10-linux-arm-pi.tar && \
+    wget http://node-arm.herokuapp.com/node_latest_armhf.deb && \
+    dpkg -i node_latest_armhf.deb && \
+    rm node_latest_armhf.deb && \
     apt-get autoremove -y wget
 
-env PATH /node-v0.11.10-linux-arm-pi/bin:$PATH
-
 # install RPI.GPIO python libs
-RUN apt-get install -y python-pip mercurial && \
-    pip install hg+http://hg.code.sf.net/p/raspberry-gpio-python/code#egg=RPi.GPIO && \
-    apt-get autoremove -y python-pip mercurial
+RUN apt-get install -y wget && \
+     wget http://downloads.sourceforge.net/project/raspberry-gpio-python/raspbian-wheezy/python-rpi.gpio_0.5.11-1_armhf.deb && \
+     dpkg -i python-rpi.gpio_0.5.11-1_armhf.deb && \
+     rm python-rpi.gpio_0.5.11-1_armhf.deb && \
+     apt-get autoremove -y wget
 
 # install node-red
 RUN apt-get install -y build-essential && \
