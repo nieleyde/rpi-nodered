@@ -2,7 +2,7 @@
 FROM resin/rpi-raspbian
 
 # install required packages, in one command
-RUN apt-get update && \
+RUN apt-get update  && \
     apt-get install -y  python-dev
 
 ENV PYTHON /usr/bin/python2
@@ -24,8 +24,6 @@ RUN apt-get install -y wget && \
 # install node-red
 RUN apt-get install -y build-essential && \
     npm install -g --unsafe-perm  node-red && \
-    npm install node-red-contrib-googlechart && \
-    npm install node-red-node-web-nodes && \
     apt-get autoremove -y build-essential
 
 # install nodered nodes
@@ -37,6 +35,11 @@ WORKDIR /root/bin
 RUN ln -s /usr/bin/python2 ~/bin/python
 RUN ln -s /usr/bin/python2-config ~/bin/python-config
 env PATH ~/bin:$PATH
+
+WORKDIR /root/.node-red
+RUN npm install node-red-node-redis && \
+    npm install node-red-contrib-googlechart && \
+    npm install node-red-node-web-nodes 
 
 # run application
 EXPOSE 1880
